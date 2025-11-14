@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useDrawingStore } from "../../stores/drawingStore";
 import { useImageStore } from "../../stores/imageStore";
 import { useSettingsStore } from "../../stores/settingsStore";
-import { startDrawing as startDrawingCommand, stopDrawing as stopDrawingCommand, pauseDrawing as pauseDrawingCommand, resumeDrawing as resumeDrawingCommand } from "../../utils/tauriCommands";
+import { startDrawing as startDrawingCommand } from "../../utils/tauriCommands";
 import { fileToUint8Array, uint8ArrayToNumberArray } from "../../utils/imageUtils";
 import Button from "../ui/Button";
 import Card from "../ui/Card";
@@ -12,7 +12,7 @@ import Preview from "./Preview";
 import { ToastContainer, Toast } from "../ui/Toast";
 
 export default function Controls() {
-  const { image, imageUrl } = useImageStore();
+  const { image } = useImageStore();
   const { drawingMethod, speed, canvasBounds, isCalibrated, colorPalette } = useSettingsStore();
   const { startDrawing: setDrawingState } = useDrawingStore();
   const [showPreview, setShowPreview] = useState(false);
@@ -43,6 +43,10 @@ export default function Controls() {
     setShowCountdown(false);
     
     try {
+      if (!image || !canvasBounds) {
+        addToast("error", "Please complete all setup steps first");
+        return;
+      }
       // Convert image file to Uint8Array
       const imageData = await fileToUint8Array(image);
       const imageArray = uint8ArrayToNumberArray(imageData);

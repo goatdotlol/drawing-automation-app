@@ -1,7 +1,6 @@
 import { Settings2 } from "lucide-react";
 import { useSettingsStore, DrawingMethod } from "../../stores/settingsStore";
 import Card from "../ui/Card";
-import Input from "../ui/Input";
 
 const methods: { value: DrawingMethod; label: string; description: string; estimatedTime: string }[] = [
   {
