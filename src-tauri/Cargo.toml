@@ -10,7 +10,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
+<<<<<<< HEAD
 tauri-build = { version = "2.0", features = [] }
+=======
+tauri-build = { version = "2", features = [] }
+base64 = "0.13"
+>>>>>>> 42f92c9e0cf21b96fb95db5bde3bd00653fa4b4e
 
 [dependencies]
 tauri = { version = "2.0", features = [] }
