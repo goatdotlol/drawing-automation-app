@@ -3,6 +3,7 @@ import { useState } from "react";
 import Card from "../ui/Card";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
+import { captureScreenshot } from "../../utils/tauriCommands";
 
 const aspectRatios = [
   { label: "Free", value: null },
@@ -42,7 +43,6 @@ export default function DimensionTool() {
   const handleCaptureScreen = async () => {
     setIsCapturing(true);
     try {
-      const { captureScreenshot } = await import("../../utils/tauriCommands");
       await captureScreenshot();
       // Screenshot captured, selection overlay would show here
       setIsCapturing(false);

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useSettingsStore } from "../../stores/settingsStore";
 import Card from "../ui/Card";
 import Button from "../ui/Button";
+import { captureScreenshot, detectColorPalette } from "../../utils/tauriCommands";
 
 export default function ColorPalette() {
   const { colorPalette, setColorPalette } = useSettingsStore();
@@ -11,7 +12,6 @@ export default function ColorPalette() {
   const handleAutoDetect = async () => {
     setIsDetecting(true);
     try {
-      const { captureScreenshot, detectColorPalette } = await import("../../utils/tauriCommands");
       const screenshot = await captureScreenshot();
       const colors = await detectColorPalette(screenshot);
       setColorPalette(colors);
