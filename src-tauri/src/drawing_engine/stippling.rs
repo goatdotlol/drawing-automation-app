@@ -1,4 +1,3 @@
-use image::GenericImageView;
 use super::{DrawingConfig, DrawingPoint, DrawingEngine};
 use rand::Rng;
 use image::GenericImageView;

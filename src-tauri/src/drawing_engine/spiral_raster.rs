@@ -1,5 +1,5 @@
 use super::{DrawingConfig, DrawingPoint, DrawingEngine};
-use image::{DynamicImage, GenericImageView};
+use image::GenericImageView;
 
 pub struct SpiralRasterEngine;
 
@@ -7,7 +7,7 @@ impl DrawingEngine for SpiralRasterEngine {
     fn process_image(&self, image_data: Vec<u8>, config: &DrawingConfig) -> Vec<DrawingPoint> {
         let img = image::load_from_memory(&image_data)
             .expect("Failed to load image");
-    let (width, height) = img.dimensions();
+        let (width, height) = img.dimensions();
     let center_x = width / 2;
     let center_y = height / 2;
     let max_radius = (width.max(height) as f32 * 0.71) as u32; // Diagonal
@@ -51,17 +51,6 @@ impl DrawingEngine for SpiralRasterEngine {
         points
     }
 }
-use super::{DrawingConfig, DrawingPoint, DrawingEngine};
-use image::{DynamicImage, GenericImageView};
-
-pub struct SpiralRasterEngine;
-
-impl DrawingEngine for SpiralRasterEngine {
-    fn process_image(&self, image_data: Vec<u8>, config: &DrawingConfig) -> Vec<DrawingPoint> {
-        let img = image::load_from_memory(&image_data)
-            .expect("Failed to load image");
-        
-        let (width, height) = img.dimensions();
         let center_x = width / 2;
         let center_y = height / 2;
         let max_radius = (width.max(height) as f32 * 0.71) as u32; // Diagonal

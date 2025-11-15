@@ -147,7 +147,7 @@ fn capture_screenshot() -> Result<Vec<u8>, String> {
     
     let mut buffer = Vec::new();
     let encoder = PngEncoder::new(&mut buffer);
-    encoder.write_image(&raw, width, height, ColorType::Rgba8)
+        encoder.write_image(&raw, width, height, ColorType::Rgba8.into())
         .map_err(|e| format!("Failed to encode PNG: {}", e))?;
     
     Ok(buffer)

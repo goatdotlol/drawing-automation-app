@@ -1,4 +1,3 @@
-use image::GenericImageView;
 use super::{DrawingConfig, DrawingPoint, DrawingEngine};
 use image::GenericImageView;
 
