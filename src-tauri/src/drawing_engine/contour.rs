@@ -1,4 +1,5 @@
 use super::{DrawingConfig, DrawingPoint, DrawingEngine};
+use image::GenericImageView;
 
 pub struct ContourVectorEngine;
 

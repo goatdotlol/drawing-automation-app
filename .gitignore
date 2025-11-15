@@ -30,3 +30,4 @@ src-tauri/Cargo.lock
 # Environment
 .env
 .env.local
+src-tauri/src/drawing_engine/spiral_raster.rs

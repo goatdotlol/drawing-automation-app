@@ -7,8 +7,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     fs::create_dir_all(&icons_dir)?;
 
-    // 1x1 transparent PNG (base64)
-    let png_b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
+    // 1x1 transparent PNG (base64) - valid PNG data
+    let png_b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMBAAiISF8AAAAASUVORK5CYII=";
     let png = base64::decode(png_b64)?;
 
     // Build ICO structure with single PNG entry (modern ICO can contain PNG)

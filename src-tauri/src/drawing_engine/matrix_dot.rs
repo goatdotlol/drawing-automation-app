@@ -1,5 +1,5 @@
 use super::{DrawingConfig, DrawingPoint, DrawingEngine};
-use image::{DynamicImage, GenericImage, GenericImageView};
+use image::GenericImageView;
 
 pub struct MatrixDotEngine;
 

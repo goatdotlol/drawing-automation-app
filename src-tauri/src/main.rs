@@ -5,7 +5,7 @@ mod drawing_engine;
 mod mouse_control;
 mod image_processing;
 
-use drawing_engine::{DrawingMethod, DrawingConfig, DrawingPoint, CanvasBounds, DrawingEngine, MatrixDotEngine, FloydSteinbergEngine, SpiralRasterEngine, ScanlineEngine, StipplingEngine, ContourVectorEngine};
+use drawing_engine::{DrawingMethod, DrawingConfig, CanvasBounds, DrawingEngine, MatrixDotEngine, FloydSteinbergEngine, SpiralRasterEngine, ScanlineEngine, StipplingEngine, ContourVectorEngine};
 use mouse_control::automation::MouseAutomation;
 use mouse_control::path_optimizer::optimize_path;
 use serde::{Deserialize, Serialize};
