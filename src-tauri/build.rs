@@ -45,7 +45,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         f.write_all(&ico)?;
     }
 
-    tauri_build::build();
+        tauri_build::build()
     Ok(())
 }
 

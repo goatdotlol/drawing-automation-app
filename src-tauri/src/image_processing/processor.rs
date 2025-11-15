@@ -1,4 +1,4 @@
-use image::DynamicImage;
+use image::{DynamicImage, GenericImageView};
 
 pub fn resize_image(img: DynamicImage, max_width: u32, max_height: u32) -> DynamicImage {
     let (width, height) = img.dimensions();

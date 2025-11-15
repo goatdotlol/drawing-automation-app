@@ -10,7 +10,7 @@ pub fn optimize_path(points: Vec<DrawingPoint>) -> Vec<DrawingPoint> {
     let mut remaining: Vec<(usize, DrawingPoint)> = points.into_iter().enumerate().collect();
     
     // Start with first point
-    let (first_idx, first_point) = remaining.remove(0);
+    let (_first_idx, first_point) = remaining.remove(0);
     optimized.push(first_point);
 
     while !remaining.is_empty() {
