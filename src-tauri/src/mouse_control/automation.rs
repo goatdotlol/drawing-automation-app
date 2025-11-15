@@ -1,4 +1,4 @@
-use enigo::{Enigo, Mouse, Button, Settings, Coordinate};
+use enigo::*;
 use crate::drawing_engine::DrawingPoint;
 use std::time::Duration;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -13,7 +13,7 @@ pub struct MouseAutomation {
 impl MouseAutomation {
     pub fn new() -> Self {
         Self {
-            enigo: Enigo::new(&Settings::default()).expect("failed to init enigo"),
+            enigo: Enigo::new(),
             is_running: Arc::new(AtomicBool::new(false)),
             is_paused: Arc::new(AtomicBool::new(false)),
         }
@@ -47,13 +47,13 @@ impl MouseAutomation {
                 std::thread::sleep(Duration::from_millis(100));
             }
 
-            // Move mouse to position (enigo handles smooth movement internally)
-            let _ = self.enigo.move_mouse(point.x, point.y, Coordinate::Abs);
+            // Move mouse to position
+            self.enigo.mouse_move_to(point.x, point.y);
             std::thread::sleep(delay);
 
             // Click if needed (for dot placement)
             if point.size > 0 {
-                let _ = self.enigo.button(Button::Left, enigo::Direction::Click);
+                self.enigo.mouse_click(MouseButton::Left);
                 std::thread::sleep(delay / 2);
             }
 
@@ -83,4 +83,3 @@ impl MouseAutomation {
         self.is_running.load(Ordering::Relaxed)
     }
 }
-
