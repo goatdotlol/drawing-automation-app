@@ -36,7 +36,6 @@ export function MiniPlayer({
     const methodSpeeds = useSettingsStore((state) => state.methodSpeeds);
     const setMethodSpeed = useSettingsStore((state) => state.setMethodSpeed);
 
-    const selectedMethodData = methods.find(m => m.id === selectedMethod);
     const currentSpeed = methodSpeeds[selectedMethod] || 1000;
 
     // Auto-pin when mini mode is active
