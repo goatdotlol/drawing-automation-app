@@ -2,14 +2,15 @@ import { useState, useCallback } from 'react';
 import { Upload, FileImage, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../ui/Button';
+import { open } from '@tauri-apps/plugin-dialog';
 
 interface DropZoneProps {
-    onFileSelect: (file: File) => void;
+    onFileSelect: (fileOrPath: File | string) => void;
 }
 
 export function DropZone({ onFileSelect }: DropZoneProps) {
     const [isDragging, setIsDragging] = useState(false);
-    const [file, setFile] = useState<File | null>(null);
+    const [fileName, setFileName] = useState<string | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -44,26 +45,43 @@ export function DropZone({ onFileSelect }: DropZoneProps) {
         const files = e.dataTransfer.files;
         if (files && files[0]) {
             if (validateFile(files[0])) {
-                setFile(files[0]);
+                setFileName(files[0].name);
                 setPreview(URL.createObjectURL(files[0]));
                 onFileSelect(files[0]);
             }
         }
     }, [onFileSelect]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            setError(null);
-            if (validateFile(e.target.files[0])) {
-                setFile(e.target.files[0]);
-                setPreview(URL.createObjectURL(e.target.files[0]));
-                onFileSelect(e.target.files[0]);
+    const handleClick = async () => {
+        try {
+            const selected = await open({
+                multiple: false,
+                filters: [{
+                    name: 'Image',
+                    extensions: ['png', 'jpg', 'jpeg', 'webp']
+                }]
+            });
+
+            if (selected && typeof selected === 'string') {
+                // For dialog selection, we get a path string
+                // We can't easily get the file object or preview for local path without convertFileSrc
+                // But for now let's just pass the path
+                const name = selected.split(/[\\/]/).pop() || 'Selected Image';
+                setFileName(name);
+                // Use a placeholder or try to load it? 
+                // For now, just show the name.
+                // Actually, we can use convertFileSrc from tauri api but let's keep it simple.
+                setPreview(null); // No preview for path yet unless we use convertFileSrc
+                onFileSelect(selected);
             }
+        } catch (err) {
+            console.error(err);
+            setError('Failed to open file dialog');
         }
     };
 
     const clearFile = () => {
-        setFile(null);
+        setFileName(null);
         setPreview(null);
         setError(null);
     };
@@ -71,7 +89,7 @@ export function DropZone({ onFileSelect }: DropZoneProps) {
     return (
         <div className="w-full">
             <AnimatePresence mode="wait">
-                {!file ? (
+                {!fileName ? (
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -87,16 +105,8 @@ export function DropZone({ onFileSelect }: DropZoneProps) {
                         onDragLeave={handleDrag}
                         onDragOver={handleDrag}
                         onDrop={handleDrop}
-                        onClick={() => document.getElementById('file-upload')?.click()}
+                        onClick={handleClick}
                     >
-                        <input
-                            id="file-upload"
-                            type="file"
-                            className="hidden"
-                            accept="image/*"
-                            onChange={handleChange}
-                        />
-
                         <div className="relative z-10 flex flex-col items-center gap-4">
                             <div className={cn(
                                 "w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300",
@@ -108,7 +118,7 @@ export function DropZone({ onFileSelect }: DropZoneProps) {
 
                             <div className="text-center">
                                 <p className="text-lg font-medium text-white mb-1">
-                                    {error ? error : isDragging ? "Drop it like it's hot!" : "Click or drag image here"}
+                                    {error ? error : isDragging ? "Drop it like it's hot!" : "Click to browse or drag image"}
                                 </p>
                                 <p className="text-sm text-text-muted">
                                     Supports JPG, PNG, WebP (Max 10MB)
@@ -125,12 +135,19 @@ export function DropZone({ onFileSelect }: DropZoneProps) {
                         animate={{ opacity: 1, scale: 1 }}
                         className="relative rounded-2xl overflow-hidden border border-gray-700 bg-background shadow-2xl"
                     >
-                        <div className="aspect-video w-full relative group">
-                            <img
-                                src={preview!}
-                                alt="Preview"
-                                className="w-full h-full object-contain bg-black/50"
-                            />
+                        <div className="aspect-video w-full relative group bg-black/50 flex items-center justify-center">
+                            {preview ? (
+                                <img
+                                    src={preview}
+                                    alt="Preview"
+                                    className="w-full h-full object-contain"
+                                />
+                            ) : (
+                                <div className="text-text-muted flex flex-col items-center">
+                                    <FileImage className="w-12 h-12 mb-2" />
+                                    <span>Preview not available for local files</span>
+                                </div>
+                            )}
                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-4">
                                 <button
                                     onClick={clearFile}
@@ -149,8 +166,7 @@ export function DropZone({ onFileSelect }: DropZoneProps) {
                                     <FileImage className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <p className="font-medium text-white truncate max-w-[200px]">{file.name}</p>
-                                    <p className="text-xs text-text-muted">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                    <p className="font-medium text-white truncate max-w-[200px]">{fileName}</p>
                                 </div>
                             </div>
                             <button

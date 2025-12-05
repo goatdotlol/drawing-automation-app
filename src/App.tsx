@@ -17,14 +17,20 @@ function App() {
     const [isDrawing, setIsDrawing] = useState(false);
     const addLog = useLogStore((state) => state.addLog);
 
-    const handleFileSelect = (file: File) => {
-        // In Tauri, File object usually has a path property
-        const path = (file as any).path;
+    const handleFileSelect = (fileOrPath: File | string) => {
+        let path = '';
+        if (typeof fileOrPath === 'string') {
+            path = fileOrPath;
+        } else {
+            // Fallback for drag and drop if path is available
+            path = (fileOrPath as any).path || '';
+        }
+
         if (path) {
             setImagePath(path);
             addLog('info', `File selected: ${path}`, 'frontend');
         } else {
-            addLog('error', 'Could not get file path', 'frontend');
+            addLog('error', 'Could not get file path. Please click to browse instead of drag-and-drop.', 'frontend');
         }
     };
 
