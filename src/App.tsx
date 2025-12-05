@@ -122,7 +122,7 @@ function App() {
                 return newState;
             });
 
-            addLog('success', `Captured ${point}: ${x}, ${y}`, 'frontend');
+            addLog('info', `Captured ${point}: ${x}, ${y}`, 'frontend');
 
         } catch (error) {
             console.error(error);
@@ -224,7 +224,7 @@ function App() {
                                                                             className="w-full bg-background border border-gray-700 rounded px-2 py-1 text-sm"
                                                                         />
                                                                     </div>
-                                                                    <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => handleCapture('p1')}>
+                                                                    <Button size="sm" variant="secondary" className="w-full text-xs" onClick={() => handleCapture('p1')}>
                                                                         Capture (Wait 3s)
                                                                     </Button>
                                                                 </div>
@@ -244,7 +244,7 @@ function App() {
                                                                             className="w-full bg-background border border-gray-700 rounded px-2 py-1 text-sm"
                                                                         />
                                                                     </div>
-                                                                    <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => handleCapture('p2')}>
+                                                                    <Button size="sm" variant="secondary" className="w-full text-xs" onClick={() => handleCapture('p2')}>
                                                                         Capture (Wait 3s)
                                                                     </Button>
                                                                 </div>
