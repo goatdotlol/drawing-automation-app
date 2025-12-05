@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { MainArea } from './components/layout/MainArea';
@@ -8,14 +8,28 @@ import { Card } from './components/ui/Card';
 import { Button } from './components/ui/Button';
 import { DebugConsole } from './components/debug/DebugConsole';
 import { invoke } from '@tauri-apps/api/core';
+import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
 import { useLogStore } from './stores/logStore';
+import { MiniPlayer } from './components/layout/MiniPlayer';
 
 function App() {
     const [activeTab, setActiveTab] = useState('home');
     const [selectedMethod, setSelectedMethod] = useState('matrix');
     const [imagePath, setImagePath] = useState<string | null>(null);
     const [isDrawing, setIsDrawing] = useState(false);
+    const [isMini, setIsMini] = useState(false);
     const addLog = useLogStore((state) => state.addLog);
+
+    const toggleMini = async () => {
+        const appWindow = getCurrentWindow();
+        const newState = !isMini;
+        setIsMini(newState);
+        if (newState) {
+            await appWindow.setSize(new LogicalSize(300, 150)); // Compact size
+        } else {
+            await appWindow.setSize(new LogicalSize(1200, 800));
+        }
+    };
 
     const handleFileSelect = (fileOrPath: File | string) => {
         let path = '';
@@ -70,86 +84,139 @@ function App() {
         }
     };
 
+    const handleSelectArea = async () => {
+        try {
+            const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+            const overlay = await WebviewWindow.getByLabel('overlay');
+            if (overlay) {
+                // Ensure it's visible and covers the screen
+                await overlay.show();
+                await overlay.setFocus();
+                await overlay.maximize();
+            }
+        } catch (error) {
+            console.error('Failed to open overlay:', error);
+            addLog('error', 'Failed to open selection tool', 'frontend');
+        }
+    };
+
+    // Listen for area selection
+    useEffect(() => {
+        const setupListener = async () => {
+            const { listen } = await import('@tauri-apps/api/event');
+            const unlisten = await listen('area-selected', (event: any) => {
+                const { x, y, width, height } = event.payload;
+                addLog('info', `Area selected: ${Math.round(x)},${Math.round(y)} ${Math.round(width)}x${Math.round(height)}`, 'frontend');
+                // Here you would update the drawing config with these coordinates
+            });
+            return unlisten;
+        };
+
+        // We need to handle the cleanup of the promise-based listener
+        let unlistenFn: (() => void) | undefined;
+        setupListener().then(fn => unlistenFn = fn);
+
+        return () => {
+            if (unlistenFn) unlistenFn();
+        };
+    }, []);
+
     return (
-        <div className="flex flex-col h-screen bg-background text-text overflow-hidden rounded-xl border border-gray-700 shadow-2xl">
-            <Header />
+        <div className="flex flex-col h-screen bg-transparent overflow-hidden rounded-xl shadow-2xl">
+            {isMini ? (
+                <MiniPlayer
+                    onExpand={toggleMini}
+                    isDrawing={isDrawing}
+                    onStart={handleStartDrawing}
+                    onStop={handleStopDrawing}
+                />
+            ) : (
+                <div className="flex flex-col h-full bg-background border border-gray-700 rounded-xl overflow-hidden">
+                    <Header isMini={isMini} toggleMini={toggleMini} />
 
-            <div className="flex flex-1 overflow-hidden">
-                <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+                    <div className="flex flex-1 overflow-hidden">
+                        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-                <MainArea>
-                    {activeTab === 'home' && (
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                <div className="lg:col-span-2 space-y-6">
-                                    <section>
-                                        <h2 className="text-2xl font-bold text-white mb-4">Quick Start</h2>
-                                        <Card>
-                                            <DropZone onFileSelect={handleFileSelect} />
-                                        </Card>
-                                    </section>
-
-                                    <section>
-                                        <h2 className="text-xl font-bold text-white mb-4">Drawing Method</h2>
-                                        <DrawingMethodSelector
-                                            selectedMethod={selectedMethod}
-                                            onSelect={setSelectedMethod}
-                                        />
-                                    </section>
-                                </div>
-
+                        <MainArea>
+                            {activeTab === 'home' && (
                                 <div className="space-y-6">
-                                    <section>
-                                        <h2 className="text-xl font-bold text-white mb-4">Status</h2>
-                                        <Card className="bg-gradient-to-br from-surface to-surface/50">
-                                            <div className="space-y-4">
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-text-muted">Service Status</span>
-                                                    <span className="text-success font-medium flex items-center gap-2">
-                                                        <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                                                        Online
-                                                    </span>
-                                                </div>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-text-muted">Mouse Driver</span>
-                                                    <span className="text-success font-medium">Ready</span>
-                                                </div>
-                                                <div className="pt-4 border-t border-gray-700">
-                                                    {!isDrawing ? (
-                                                        <Button className="w-full" onClick={handleStartDrawing}>
-                                                            Start Drawing
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                        <div className="lg:col-span-2 space-y-6">
+                                            <section>
+                                                <h2 className="text-2xl font-bold text-white mb-4">Quick Start</h2>
+                                                <Card>
+                                                    <DropZone onFileSelect={handleFileSelect} />
+                                                    <div className="mt-4">
+                                                        <Button variant="secondary" className="w-full" onClick={handleSelectArea}>
+                                                            Select Drawing Area (Snipping Tool)
                                                         </Button>
-                                                    ) : (
-                                                        <Button className="w-full bg-error hover:bg-red-600" onClick={handleStopDrawing}>
-                                                            Stop Drawing
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </Card>
-                                    </section>
+                                                    </div>
+                                                </Card>
+                                            </section>
 
-                                    <section>
-                                        <h2 className="text-xl font-bold text-white mb-4">Recent Activity</h2>
-                                        <Card>
-                                            <div className="text-center py-8 text-text-muted">
-                                                No recent drawings
-                                            </div>
-                                        </Card>
-                                    </section>
+                                            <section>
+                                                <h2 className="text-xl font-bold text-white mb-4">Drawing Method</h2>
+                                                <DrawingMethodSelector
+                                                    selectedMethod={selectedMethod}
+                                                    onSelect={setSelectedMethod}
+                                                />
+                                            </section>
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            <section>
+                                                <h2 className="text-xl font-bold text-white mb-4">Status</h2>
+                                                <Card className="bg-gradient-to-br from-surface to-surface/50">
+                                                    <div className="space-y-4">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-text-muted">Service Status</span>
+                                                            <span className="text-success font-medium flex items-center gap-2">
+                                                                <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                                                                Online
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-text-muted">Mouse Driver</span>
+                                                            <span className="text-success font-medium">Ready</span>
+                                                        </div>
+                                                        <div className="pt-4 border-t border-gray-700">
+                                                            {!isDrawing ? (
+                                                                <Button className="w-full" onClick={handleStartDrawing}>
+                                                                    Start Drawing
+                                                                </Button>
+                                                            ) : (
+                                                                <Button className="w-full bg-error hover:bg-red-600" onClick={handleStopDrawing}>
+                                                                    Stop Drawing
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </Card>
+                                            </section>
+
+                                            <section>
+                                                <h2 className="text-xl font-bold text-white mb-4">Recent Activity</h2>
+                                                <Card>
+                                                    <div className="text-center py-8 text-text-muted">
+                                                        No recent drawings
+                                                    </div>
+                                                </Card>
+                                            </section>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    )}
+                            )}
 
-                    {activeTab !== 'home' && (
-                        <div className="flex items-center justify-center h-full text-text-muted">
-                            Work in progress...
-                        </div>
-                    )}
-                </MainArea>
-            </div>
-            <DebugConsole />
+                            {activeTab !== 'home' && (
+                                <div className="flex items-center justify-center h-full text-text-muted">
+                                    Work in progress...
+                                </div>
+                            )}
+                        </MainArea>
+                    </div>
+                    <DebugConsole />
+                </div>
+            )}
         </div>
     );
 }

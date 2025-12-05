@@ -3,10 +3,14 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { LogicalSize } from '@tauri-apps/api/dpi';
 import { useState } from 'react';
 
-export function Header() {
+interface HeaderProps {
+    isMini: boolean;
+    toggleMini: () => void;
+}
+
+export function Header({ isMini, toggleMini }: HeaderProps) {
     const appWindow = getCurrentWindow();
     const [isPinned, setIsPinned] = useState(false);
-    const [isMini, setIsMini] = useState(false);
 
     const minimize = () => appWindow.minimize();
     const toggleMaximize = () => appWindow.toggleMaximize();
@@ -16,16 +20,6 @@ export function Header() {
         const newState = !isPinned;
         setIsPinned(newState);
         await appWindow.setAlwaysOnTop(newState);
-    };
-
-    const toggleMini = async () => {
-        const newState = !isMini;
-        setIsMini(newState);
-        if (newState) {
-            await appWindow.setSize(new LogicalSize(300, 400));
-        } else {
-            await appWindow.setSize(new LogicalSize(1200, 800));
-        }
     };
 
     return (
