@@ -106,256 +106,273 @@ function App() {
     const [manualSelection, setManualSelection] = useState({
         x1: 0, y1: 0, x2: 0, y2: 0
     });
-    setManualSelection(coords);
-    setIsScreenshotModalOpen(false);
-    setScreenshotUrl(null);
-    addLog('info', `Area selected: ${coords.x1},${coords.y1} - ${coords.x2},${coords.y2}`, 'frontend');
-};
 
-const handleSelectArea = async () => {
-    try {
-        const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
-        const overlay = await WebviewWindow.getByLabel('overlay');
-        if (overlay) {
-            // Ensure it's visible and covers the screen
-            await overlay.show();
-            await overlay.setFocus();
-            await overlay.maximize();
+    const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
+    const [isScreenshotModalOpen, setIsScreenshotModalOpen] = useState(false);
+
+    const handleCaptureScreen = async () => {
+        try {
+            const url = await invoke<string>('capture_screen');
+            setScreenshotUrl(url);
+            setIsScreenshotModalOpen(true);
+            addLog('info', 'Screen captured for selection', 'frontend');
+        } catch (error) {
+            console.error('Failed to capture screen:', error);
+            addLog('error', `Failed to capture screen: ${error}`, 'frontend');
         }
-    } catch (error) {
-        console.error('Failed to open overlay:', error);
-        addLog('error', 'Failed to open selection tool', 'frontend');
-    }
-};
+    };
 
-// Listen for area selection
-useEffect(() => {
-    const setupListener = async () => {
-        const { listen } = await import('@tauri-apps/api/event');
-        const unlisten = await listen('area-selected', (event: any) => {
-            const { x, y, width, height } = event.payload;
-            addLog('info', `Area selected: ${Math.round(x)},${Math.round(y)} ${Math.round(width)}x${Math.round(height)}`, 'frontend');
+    const handleAreaSelected = (coords: { x1: number, y1: number, x2: number, y2: number }) => {
+        setManualSelection(coords);
+        setIsScreenshotModalOpen(false);
+        setScreenshotUrl(null);
+        addLog('info', `Area selected: ${coords.x1},${coords.y1} - ${coords.x2},${coords.y2}`, 'frontend');
+    };
 
-            // Update manual selection state
-            setManualSelection({
-                x1: Math.round(x),
-                y1: Math.round(y),
-                x2: Math.round(x + width),
-                y2: Math.round(y + height)
+    const handleSelectArea = async () => {
+        try {
+            const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+            const overlay = await WebviewWindow.getByLabel('overlay');
+            if (overlay) {
+                // Ensure it's visible and covers the screen
+                await overlay.show();
+                await overlay.setFocus();
+                await overlay.maximize();
+            }
+        } catch (error) {
+            console.error('Failed to open overlay:', error);
+            addLog('error', 'Failed to open selection tool', 'frontend');
+        }
+    };
+
+    // Listen for area selection
+    useEffect(() => {
+        const setupListener = async () => {
+            const { listen } = await import('@tauri-apps/api/event');
+            const unlisten = await listen('area-selected', (event: any) => {
+                const { x, y, width, height } = event.payload;
+                addLog('info', `Area selected: ${Math.round(x)},${Math.round(y)} ${Math.round(width)}x${Math.round(height)}`, 'frontend');
+
+                // Update manual selection state
+                setManualSelection({
+                    x1: Math.round(x),
+                    y1: Math.round(y),
+                    x2: Math.round(x + width),
+                    y2: Math.round(y + height)
+                });
             });
-        });
-        return unlisten;
-    };
+            return unlisten;
+        };
 
-    // We need to handle the cleanup of the promise-based listener
-    let unlistenFn: (() => void) | undefined;
-    setupListener().then(fn => unlistenFn = fn);
+        // We need to handle the cleanup of the promise-based listener
+        let unlistenFn: (() => void) | undefined;
+        setupListener().then(fn => unlistenFn = fn);
 
-    return () => {
-        if (unlistenFn) unlistenFn();
-    };
-}, []);
+        return () => {
+            if (unlistenFn) unlistenFn();
+        };
+    }, []);
 
-return (
-    <div className="flex flex-col h-screen bg-transparent overflow-hidden rounded-xl shadow-2xl">
-        {isMini ? (
-            <MiniPlayer
-                onExpand={toggleMini}
-                isDrawing={isDrawing}
-                onStart={handleStartDrawing}
-                onStop={handleStopDrawing}
-                selectedMethod={selectedMethod}
-                onMethodChange={setSelectedMethod}
-                onUploadClick={() => {
-                    // Trigger file selection
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.accept = 'image/*';
-                    input.onchange = (e: any) => {
-                        const file = e.target?.files?.[0];
-                        if (file) handleFileSelect(file);
-                    };
-                    input.click();
-                }}
-            />
-        ) : (
-            <div className="flex flex-col h-full bg-background border border-gray-700 rounded-xl overflow-hidden">
-                <Header isMini={isMini} toggleMini={toggleMini} />
+    return (
+        <div className="flex flex-col h-screen bg-transparent overflow-hidden rounded-xl shadow-2xl">
+            {isMini ? (
+                <MiniPlayer
+                    onExpand={toggleMini}
+                    isDrawing={isDrawing}
+                    onStart={handleStartDrawing}
+                    onStop={handleStopDrawing}
+                    selectedMethod={selectedMethod}
+                    onMethodChange={setSelectedMethod}
+                    onUploadClick={() => {
+                        // Trigger file selection
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = (e: any) => {
+                            const file = e.target?.files?.[0];
+                            if (file) handleFileSelect(file);
+                        };
+                        input.click();
+                    }}
+                />
+            ) : (
+                <div className="flex flex-col h-full bg-background border border-gray-700 rounded-xl overflow-hidden">
+                    <Header isMini={isMini} toggleMini={toggleMini} />
 
-                <div className="flex flex-1 overflow-hidden">
-                    <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+                    <div className="flex flex-1 overflow-hidden">
+                        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-                    <MainArea>
-                        {activeTab === 'home' && (
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                    {/* Left Column */}
-                                    <div className="lg:col-span-2 space-y-6">
-                                        <section>
-                                            <h2 className="text-2xl font-bold text-white mb-4">Quick Start</h2>
-                                            <Card>
-                                                <DropZone onFileSelect={handleFileSelect} />
-                                                <div className="mt-4 space-y-4">
-                                                    <Button variant="secondary" className="w-full hidden" onClick={handleSelectArea}>
-                                                        Select Drawing Area (Snipping Tool)
-                                                    </Button>
+                        <MainArea>
+                            {activeTab === 'home' && (
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                        {/* Left Column */}
+                                        <div className="lg:col-span-2 space-y-6">
+                                            <section>
+                                                <h2 className="text-2xl font-bold text-white mb-4">Quick Start</h2>
+                                                <Card>
+                                                    <DropZone onFileSelect={handleFileSelect} />
+                                                    <div className="mt-4 space-y-4">
+                                                        <Button variant="secondary" className="w-full hidden" onClick={handleSelectArea}>
+                                                            Select Drawing Area (Snipping Tool)
+                                                        </Button>
 
-                                                    <div className="p-4 bg-surface/50 rounded-lg border border-gray-700">
-                                                        <h3 className="text-sm font-medium text-text-muted mb-3">Drawing Area</h3>
-                                                        <div className="mb-4">
-                                                            <Button variant="secondary" className="w-full" onClick={handleCaptureScreen}>
-                                                                Capture Screen & Select Area
-                                                            </Button>
-                                                        </div>
-                                                        <div className="grid grid-cols-2 gap-4 mb-4">
-                                                            <div className="space-y-2">
-                                                                <label className="text-xs text-text-muted">Top-Left (X, Y)</label>
-                                                                <div className="flex gap-2">
+                                                        <div className="p-4 bg-surface/50 rounded-lg border border-gray-700">
+                                                            <h3 className="text-sm font-medium text-text-muted mb-3">Drawing Area</h3>
+                                                            <div className="mb-4">
+                                                                <Button variant="secondary" className="w-full" onClick={handleCaptureScreen}>
+                                                                    Capture Screen & Select Area
+                                                                </Button>
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                                                <div className="space-y-2">
+                                                                    <label className="text-xs text-text-muted">Top-Left (X, Y)</label>
+                                                                    <div className="flex gap-2">
+                                                                        <input
+                                                                            type="number"
+                                                                            value={manualSelection.x1}
+                                                                            onChange={(e) => setManualSelection(s => ({ ...s, x1: parseInt(e.target.value) || 0 }))}
+                                                                            className="w-full bg-background border border-gray-700 rounded px-2 py-1 text-sm"
+                                                                        />
+                                                                        <input
+                                                                            type="number"
+                                                                            value={manualSelection.y1}
+                                                                            onChange={(e) => setManualSelection(s => ({ ...s, y1: parseInt(e.target.value) || 0 }))}
+                                                                            className="w-full bg-background border border-gray-700 rounded px-2 py-1 text-sm"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="space-y-2">
+                                                                    <label className="text-xs text-text-muted">Bottom-Right (X, Y)</label>
+                                                                    <div className="flex gap-2">
+                                                                        <input
+                                                                            type="number"
+                                                                            value={manualSelection.x2}
+                                                                            onChange={(e) => setManualSelection(s => ({ ...s, x2: parseInt(e.target.value) || 0 }))}
+                                                                            className="w-full bg-background border border-gray-700 rounded px-2 py-1 text-sm"
+                                                                        />
+                                                                        <input
+                                                                            type="number"
+                                                                            value={manualSelection.y2}
+                                                                            onChange={(e) => setManualSelection(s => ({ ...s, y2: parseInt(e.target.value) || 0 }))}
+                                                                            className="w-full bg-background border border-gray-700 rounded px-2 py-1 text-sm"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-4">
+                                                                <div>
+                                                                    <label className="text-xs text-text-muted">Width</label>
                                                                     <input
                                                                         type="number"
-                                                                        value={manualSelection.x1}
-                                                                        onChange={(e) => setManualSelection(s => ({ ...s, x1: parseInt(e.target.value) || 0 }))}
+                                                                        value={Math.abs(manualSelection.x2 - manualSelection.x1)}
                                                                         className="w-full bg-background border border-gray-700 rounded px-2 py-1 text-sm"
+                                                                        readOnly
                                                                     />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="text-xs text-text-muted">Height</label>
                                                                     <input
                                                                         type="number"
-                                                                        value={manualSelection.y1}
-                                                                        onChange={(e) => setManualSelection(s => ({ ...s, y1: parseInt(e.target.value) || 0 }))}
+                                                                        value={Math.abs(manualSelection.y2 - manualSelection.y1)}
                                                                         className="w-full bg-background border border-gray-700 rounded px-2 py-1 text-sm"
+                                                                        readOnly
                                                                     />
                                                                 </div>
                                                             </div>
-                                                            <div className="space-y-2">
-                                                                <label className="text-xs text-text-muted">Bottom-Right (X, Y)</label>
-                                                                <div className="flex gap-2">
-                                                                    <input
-                                                                        type="number"
-                                                                        value={manualSelection.x2}
-                                                                        onChange={(e) => setManualSelection(s => ({ ...s, x2: parseInt(e.target.value) || 0 }))}
-                                                                        className="w-full bg-background border border-gray-700 rounded px-2 py-1 text-sm"
-                                                                    />
-                                                                    <input
-                                                                        type="number"
-                                                                        value={manualSelection.y2}
-                                                                        onChange={(e) => setManualSelection(s => ({ ...s, y2: parseInt(e.target.value) || 0 }))}
-                                                                        className="w-full bg-background border border-gray-700 rounded px-2 py-1 text-sm"
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="grid grid-cols-2 gap-4">
-                                                            <div>
-                                                                <label className="text-xs text-text-muted">Width</label>
-                                                                <input
-                                                                    type="number"
-                                                                    value={Math.abs(manualSelection.x2 - manualSelection.x1)}
-                                                                    className="w-full bg-background border border-gray-700 rounded px-2 py-1 text-sm"
-                                                                    readOnly
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <label className="text-xs text-text-muted">Height</label>
-                                                                <input
-                                                                    type="number"
-                                                                    value={Math.abs(manualSelection.y2 - manualSelection.y1)}
-                                                                    className="w-full bg-background border border-gray-700 rounded px-2 py-1 text-sm"
-                                                                    readOnly
-                                                                />
-                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </Card>
-                                        </section>
+                                                </Card>
+                                            </section>
 
-                                        <section>
-                                            <h2 className="text-xl font-bold text-white mb-4">Drawing Method</h2>
-                                            <DrawingMethodSelector
-                                                selectedMethod={selectedMethod}
-                                                onSelect={setSelectedMethod}
-                                            />
-                                        </section>
-                                    </div>
+                                            <section>
+                                                <h2 className="text-xl font-bold text-white mb-4">Drawing Method</h2>
+                                                <DrawingMethodSelector
+                                                    selectedMethod={selectedMethod}
+                                                    onSelect={setSelectedMethod}
+                                                />
+                                            </section>
+                                        </div>
 
-                                    {/* Right Column */}
-                                    <div className="space-y-6">
-                                        <section>
-                                            <h2 className="text-xl font-bold text-white mb-4">Status</h2>
-                                            <Card className="bg-gradient-to-br from-surface to-surface/50">
-                                                <div className="space-y-4">
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-text-muted">Service Status</span>
-                                                        <span className="text-success font-medium flex items-center gap-2">
-                                                            <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                                                            Online
-                                                        </span>
+                                        {/* Right Column */}
+                                        <div className="space-y-6">
+                                            <section>
+                                                <h2 className="text-xl font-bold text-white mb-4">Status</h2>
+                                                <Card className="bg-gradient-to-br from-surface to-surface/50">
+                                                    <div className="space-y-4">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-text-muted">Service Status</span>
+                                                            <span className="text-success font-medium flex items-center gap-2">
+                                                                <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                                                                Online
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-text-muted">Mouse Driver</span>
+                                                            <span className="text-success font-medium">Ready</span>
+                                                        </div>
+                                                        <div className="pt-4 border-t border-gray-700">
+                                                            {!isDrawing ? (
+                                                                <Button className="w-full" onClick={handleStartDrawing}>
+                                                                    Start Drawing
+                                                                </Button>
+                                                            ) : (
+                                                                <Button className="w-full bg-error hover:bg-red-600" onClick={handleStopDrawing}>
+                                                                    Stop Drawing
+                                                                </Button>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-text-muted">Mouse Driver</span>
-                                                        <span className="text-success font-medium">Ready</span>
-                                                    </div>
-                                                    <div className="pt-4 border-t border-gray-700">
-                                                        {!isDrawing ? (
-                                                            <Button className="w-full" onClick={handleStartDrawing}>
-                                                                Start Drawing
-                                                            </Button>
-                                                        ) : (
-                                                            <Button className="w-full bg-error hover:bg-red-600" onClick={handleStopDrawing}>
-                                                                Stop Drawing
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </Card>
-                                        </section>
+                                                </Card>
+                                            </section>
 
-                                        <section>
-                                            <h2 className="text-xl font-bold text-white mb-4">Recent Activity</h2>
-                                            <Card>
-                                                <div className="text-center py-8 text-text-muted">
-                                                    No recent drawings
-                                                </div>
-                                            </Card>
-                                        </section>
+                                            <section>
+                                                <h2 className="text-xl font-bold text-white mb-4">Recent Activity</h2>
+                                                <Card>
+                                                    <div className="text-center py-8 text-text-muted">
+                                                        No recent drawings
+                                                    </div>
+                                                </Card>
+                                            </section>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {activeTab === 'settings' && <Settings />}
+                            {activeTab === 'settings' && <Settings />}
 
-                        {activeTab === 'history' && (
-                            <div className="space-y-6">
-                                <section>
-                                    <h2 className="text-2xl font-bold text-white mb-4">Drawing History</h2>
-                                    <Card>
-                                        <div className="text-center py-12 text-text-muted">
-                                            <p>No drawings recorded yet.</p>
-                                            <p className="text-sm mt-2">Completed drawings will appear here.</p>
-                                        </div>
-                                    </Card>
-                                </section>
-                            </div>
-                        )}
+                            {activeTab === 'history' && (
+                                <div className="space-y-6">
+                                    <section>
+                                        <h2 className="text-2xl font-bold text-white mb-4">Drawing History</h2>
+                                        <Card>
+                                            <div className="text-center py-12 text-text-muted">
+                                                <p>No drawings recorded yet.</p>
+                                                <p className="text-sm mt-2">Completed drawings will appear here.</p>
+                                            </div>
+                                        </Card>
+                                    </section>
+                                </div>
+                            )}
 
-                        {activeTab !== 'home' && activeTab !== 'settings' && activeTab !== 'history' && (
-                            <div className="flex items-center justify-center h-full text-text-muted">
-                                Work in progress...
-                            </div>
-                        )}
-                    </MainArea>
+                            {activeTab !== 'home' && activeTab !== 'settings' && activeTab !== 'history' && (
+                                <div className="flex items-center justify-center h-full text-text-muted">
+                                    Work in progress...
+                                </div>
+                            )}
+                        </MainArea>
+                    </div>
+                    <DebugConsole />
                 </div>
-                <DebugConsole />
-            </div>
-        )}
-        <ScreenshotModal
-            isOpen={isScreenshotModalOpen}
-            onClose={() => setIsScreenshotModalOpen(false)}
-            imageUrl={screenshotUrl}
-            onSelectArea={handleAreaSelected}
-        />
-    </div>
-);
+            )}
+            <ScreenshotModal
+                isOpen={isScreenshotModalOpen}
+                onClose={() => setIsScreenshotModalOpen(false)}
+                imageUrl={screenshotUrl}
+                onSelectArea={handleAreaSelected}
+            />
+        </div>
+    );
 }
 
 export default App;
