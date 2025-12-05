@@ -1,6 +1,5 @@
 import { Minus, Square, X, Pin, Minimize2 } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { LogicalSize } from '@tauri-apps/api/dpi';
 import { useState } from 'react';
 
 interface HeaderProps {
