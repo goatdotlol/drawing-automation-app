@@ -11,6 +11,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
 import { useLogStore } from './stores/logStore';
 import { MiniPlayer } from './components/layout/MiniPlayer';
+import { ScreenshotModal } from './components/overlay/ScreenshotModal';
 
 function App() {
     const [activeTab, setActiveTab] = useState('home');
@@ -99,35 +100,26 @@ function App() {
         x1: 0, y1: 0, x2: 0, y2: 0
     });
 
-    const handleCapture = async (point: 'p1' | 'p2') => {
+    const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
+    const [isScreenshotModalOpen, setIsScreenshotModalOpen] = useState(false);
+
+    const handleCaptureScreen = async () => {
         try {
-            addLog('info', `Move mouse to ${point === 'p1' ? 'Top-Left' : 'Bottom-Right'} and press F9/F10...`, 'frontend');
-
-            await new Promise(resolve => setTimeout(resolve, 3000)); // 3 seconds to move mouse
-
-            const pos = await invoke<{ 0: number, 1: number }>('get_mouse_position');
-            // Rust returns a tuple, which JS sees as an array or object depending on serialization.
-            // Let's assume array [x, y] or object {0: x, 1: y}
-            const [x, y] = Array.isArray(pos) ? pos : [pos[0], pos[1]];
-
-            setManualSelection(prev => {
-                const newState = { ...prev };
-                if (point === 'p1') {
-                    newState.x1 = x;
-                    newState.y1 = y;
-                } else {
-                    newState.x2 = x;
-                    newState.y2 = y;
-                }
-                return newState;
-            });
-
-            addLog('info', `Captured ${point}: ${x}, ${y}`, 'frontend');
-
+            const url = await invoke<string>('capture_screen');
+            setScreenshotUrl(url);
+            setIsScreenshotModalOpen(true);
+            addLog('info', 'Screen captured for selection', 'frontend');
         } catch (error) {
-            console.error(error);
-            addLog('error', `Failed to capture mouse: ${error}`, 'frontend');
+            console.error('Failed to capture screen:', error);
+            addLog('error', `Failed to capture screen: ${error}`, 'frontend');
         }
+    };
+
+    const handleAreaSelected = (coords: { x1: number, y1: number, x2: number, y2: number }) => {
+        setManualSelection(coords);
+        setIsScreenshotModalOpen(false);
+        setScreenshotUrl(null);
+        addLog('info', `Area selected: ${coords.x1},${coords.y1} - ${coords.x2},${coords.y2}`, 'frontend');
     };
 
     const handleSelectArea = async () => {
@@ -201,12 +193,17 @@ function App() {
                                                 <Card>
                                                     <DropZone onFileSelect={handleFileSelect} />
                                                     <div className="mt-4 space-y-4">
-                                                        <Button variant="secondary" className="w-full" onClick={handleSelectArea}>
+                                                        <Button variant="secondary" className="w-full hidden" onClick={handleSelectArea}>
                                                             Select Drawing Area (Snipping Tool)
                                                         </Button>
 
                                                         <div className="p-4 bg-surface/50 rounded-lg border border-gray-700">
-                                                            <h3 className="text-sm font-medium text-text-muted mb-3">Manual Selection</h3>
+                                                            <h3 className="text-sm font-medium text-text-muted mb-3">Drawing Area</h3>
+                                                            <div className="mb-4">
+                                                                <Button variant="secondary" className="w-full" onClick={handleCaptureScreen}>
+                                                                    Capture Screen & Select Area
+                                                                </Button>
+                                                            </div>
                                                             <div className="grid grid-cols-2 gap-4 mb-4">
                                                                 <div className="space-y-2">
                                                                     <label className="text-xs text-text-muted">Top-Left (X, Y)</label>
@@ -224,9 +221,6 @@ function App() {
                                                                             className="w-full bg-background border border-gray-700 rounded px-2 py-1 text-sm"
                                                                         />
                                                                     </div>
-                                                                    <Button size="sm" variant="secondary" className="w-full text-xs" onClick={() => handleCapture('p1')}>
-                                                                        Capture (Wait 3s)
-                                                                    </Button>
                                                                 </div>
                                                                 <div className="space-y-2">
                                                                     <label className="text-xs text-text-muted">Bottom-Right (X, Y)</label>
@@ -244,9 +238,6 @@ function App() {
                                                                             className="w-full bg-background border border-gray-700 rounded px-2 py-1 text-sm"
                                                                         />
                                                                     </div>
-                                                                    <Button size="sm" variant="secondary" className="w-full text-xs" onClick={() => handleCapture('p2')}>
-                                                                        Capture (Wait 3s)
-                                                                    </Button>
                                                                 </div>
                                                             </div>
                                                             <div className="grid grid-cols-2 gap-4">
@@ -338,6 +329,12 @@ function App() {
                     <DebugConsole />
                 </div>
             )}
+            <ScreenshotModal
+                isOpen={isScreenshotModalOpen}
+                onClose={() => setIsScreenshotModalOpen(false)}
+                imageUrl={screenshotUrl}
+                onSelectArea={handleAreaSelected}
+            />
         </div>
     );
 }
