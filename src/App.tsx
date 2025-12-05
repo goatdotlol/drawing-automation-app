@@ -10,16 +10,22 @@ import { DebugConsole } from './components/debug/DebugConsole';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
 import { useLogStore } from './stores/logStore';
+import { useSettingsStore } from './stores/settingsStore';
 import { MiniPlayer } from './components/layout/MiniPlayer';
 import { ScreenshotModal } from './components/overlay/ScreenshotModal';
+import { useTheme } from './hooks/useTheme';
+import { Settings } from './components/pages/Settings';
 
 function App() {
+    useTheme(); // Apply theme from settings
+
     const [activeTab, setActiveTab] = useState('home');
     const [selectedMethod, setSelectedMethod] = useState('matrix');
     const [imagePath, setImagePath] = useState<string | null>(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [isMini, setIsMini] = useState(false);
     const addLog = useLogStore((state) => state.addLog);
+    const methodSpeeds = useSettingsStore((state) => state.methodSpeeds);
 
     const toggleMini = async () => {
         const appWindow = getCurrentWindow();
@@ -68,10 +74,11 @@ function App() {
 
         try {
             setIsDrawing(true);
+            const speed = methodSpeeds[selectedMethod] || 1000;
             addLog('info', `Starting drawing at ${x},${y} ${width}x${height}...`, 'frontend');
             await invoke('start_drawing', {
                 imagePath,
-                speed: 1000, // Default speed
+                speed,
                 method: selectedMethod,
                 width,
                 height,
@@ -105,12 +112,24 @@ function App() {
 
     const handleCaptureScreen = async () => {
         try {
+            const appWindow = getCurrentWindow();
+            // Hide the window before capturing
+            await appWindow.hide();
+            // Small delay to ensure window is fully hidden
+            await new Promise(resolve => setTimeout(resolve, 200));
+
             const url = await invoke<string>('capture_screen');
+
+            // Show the window again
+            await appWindow.show();
+
             setScreenshotUrl(url);
             setIsScreenshotModalOpen(true);
             addLog('info', 'Screen captured for selection', 'frontend');
         } catch (error) {
             console.error('Failed to capture screen:', error);
+            const appWindow = getCurrentWindow();
+            await appWindow.show(); // Ensure window is shown even on error
             addLog('error', `Failed to capture screen: ${error}`, 'frontend');
         }
     };
@@ -319,7 +338,23 @@ function App() {
                                 </div>
                             )}
 
-                            {activeTab !== 'home' && (
+                            {activeTab === 'settings' && <Settings />}
+
+                            {activeTab === 'history' && (
+                                <div className="space-y-6">
+                                    <section>
+                                        <h2 className="text-2xl font-bold text-white mb-4">Drawing History</h2>
+                                        <Card>
+                                            <div className="text-center py-12 text-text-muted">
+                                                <p>No drawings recorded yet.</p>
+                                                <p className="text-sm mt-2">Completed drawings will appear here.</p>
+                                            </div>
+                                        </Card>
+                                    </section>
+                                </div>
+                            )}
+
+                            {activeTab !== 'home' && activeTab !== 'settings' && activeTab !== 'history' && (
                                 <div className="flex items-center justify-center h-full text-text-muted">
                                     Work in progress...
                                 </div>

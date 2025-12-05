@@ -7,9 +7,19 @@
   line-height: 1.5;
   font-weight: 400;
 
+  /* Default theme (dark) */
+  --color-background: #0f172a;
+  --color-surface: #1e293b;
+  --color-primary: #3b82f6;
+  --color-text-main: #f8fafc;
+  --color-text-muted: #94a3b8;
+  --color-border: #334155;
+  --color-success: #22c55e;
+  --color-error: #ef4444;
+
   color-scheme: dark;
-  background-color: #2b2d31;
-  color: #dbdee1;
+  background-color: var(--color-background);
+  color: var(--color-text-main);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -23,9 +33,29 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--color-background);
 }
 
 #root {
   width: 100%;
   height: 100vh;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+  opacity: 0.8;
 }

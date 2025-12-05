@@ -7,16 +7,16 @@ export default {
     theme: {
         extend: {
             colors: {
-                background: "#2b2d31",
-                surface: "#313338",
-                primary: "#5865f2",
-                "primary-hover": "#4752c4",
-                success: "#23a559",
-                error: "#f23f42",
+                background: "var(--color-background)",
+                surface: "var(--color-surface)",
+                primary: "var(--color-primary)",
+                success: "var(--color-success)",
+                error: "var(--color-error)",
                 text: {
-                    DEFAULT: "#dbdee1",
-                    muted: "#949ba4",
-                }
+                    DEFAULT: "var(--color-text-main)",
+                    muted: "var(--color-text-muted)",
+                },
+                border: "var(--color-border)"
             },
             borderRadius: {
                 lg: "8px",

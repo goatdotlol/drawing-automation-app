@@ -1,4 +1,4 @@
-import { Home, Settings, Image as ImageIcon, Palette, History } from 'lucide-react';
+import { Home, Settings, Image as ImageIcon, History } from 'lucide-react';
 import { cn } from '../ui/Button';
 
 interface SidebarProps {
@@ -9,8 +9,6 @@ interface SidebarProps {
 export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
     const navItems = [
         { id: 'home', icon: Home, label: 'Dashboard' },
-        { id: 'upload', icon: ImageIcon, label: 'Upload' },
-        { id: 'palette', icon: Palette, label: 'Colors' },
         { id: 'history', icon: History, label: 'History' },
         { id: 'settings', icon: Settings, label: 'Settings' },
     ];

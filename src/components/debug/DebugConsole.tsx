@@ -1,10 +1,22 @@
 import { useLogStore } from '../../stores/logStore';
 import { X, Trash2, Terminal } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useEffect } from 'react';
 
 export function DebugConsole() {
     const { logs, isVisible, toggleVisibility, clearLogs } = useLogStore();
 
+    // F10 key listener
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === 'F10') {
+                e.preventDefault();
+                toggleVisibility();
+            }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [toggleVisibility]);
     if (!isVisible) return null;
 
     return (
@@ -35,9 +47,9 @@ export function DebugConsole() {
                     <div key={log.id} className="flex gap-2">
                         <span className="text-gray-500 shrink-0">[{log.timestamp}]</span>
                         <span className={`uppercase font-bold shrink-0 w-16 ${log.level === 'error' ? 'text-red-500' :
-                                log.level === 'warn' ? 'text-yellow-500' :
-                                    log.level === 'debug' ? 'text-blue-500' :
-                                        'text-green-500'
+                            log.level === 'warn' ? 'text-yellow-500' :
+                                log.level === 'debug' ? 'text-blue-500' :
+                                    'text-green-500'
                             }`}>
                             {log.level}
                         </span>
