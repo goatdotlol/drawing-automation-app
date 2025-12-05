@@ -18,7 +18,7 @@ interface LogStore {
 
 export const useLogStore = create<LogStore>((set) => ({
     logs: [],
-    isVisible: true, // Visible by default as requested
+    isVisible: false, // Hidden by default, toggle with F10
     addLog: (level, message, source = 'frontend') => set((state) => ({
         logs: [
             {

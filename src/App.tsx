@@ -32,7 +32,7 @@ function App() {
         const newState = !isMini;
         setIsMini(newState);
         if (newState) {
-            await appWindow.setSize(new LogicalSize(300, 150)); // Compact size
+            await appWindow.setSize(new LogicalSize(280, 320)); // Compact size for new mini player
         } else {
             await appWindow.setSize(new LogicalSize(1200, 800));
         }
@@ -193,6 +193,19 @@ function App() {
                     isDrawing={isDrawing}
                     onStart={handleStartDrawing}
                     onStop={handleStopDrawing}
+                    selectedMethod={selectedMethod}
+                    onMethodChange={setSelectedMethod}
+                    onUploadClick={() => {
+                        // Trigger file selection
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = (e: any) => {
+                            const file = e.target?.files?.[0];
+                            if (file) handleFileSelect(file);
+                        };
+                        input.click();
+                    }}
                 />
             ) : (
                 <div className="flex flex-col h-full bg-background border border-gray-700 rounded-xl overflow-hidden">
