@@ -3,7 +3,7 @@
 
 mod drawing_engine;
 
-use tauri::{Manager, State};
+use tauri::State;
 use drawing_engine::{DrawingEngine, DrawingConfig};
 use std::sync::Arc;
 

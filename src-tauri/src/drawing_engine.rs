@@ -1,9 +1,8 @@
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
-use image::{GenericImageView, DynamicImage};
-use enigo::{Enigo, MouseControllable, KeyboardControllable};
-use fast_image_resize as fr;
+use image::GenericImageView;
+use enigo::{Enigo, Settings, Mouse, Button, Direction, Coordinate};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum DrawingStatus {
@@ -60,7 +59,16 @@ impl DrawingEngine {
         }
 
         thread::spawn(move || {
-            let mut enigo = Enigo::new();
+            // Initialize Enigo with default settings
+            let mut enigo = match Enigo::new(&Settings::default()) {
+                Ok(e) => e,
+                Err(e) => {
+                    println!("Failed to initialize Enigo: {:?}", e);
+                    let mut s = status.lock().unwrap();
+                    *s = DrawingStatus::Idle;
+                    return;
+                }
+            };
             
             // Load image
             let img = match image::open(&image_path) {
@@ -104,8 +112,10 @@ impl DrawingEngine {
                     let brightness = 0.2126 * pixel[0] as f32 + 0.7152 * pixel[1] as f32 + 0.0722 * pixel[2] as f32;
 
                     if brightness < 128.0 {
-                        enigo.mouse_move_to(config.x + x as i32, config.y + y as i32);
-                        enigo.mouse_click(enigo::MouseButton::Left);
+                        // Move mouse to absolute coordinates
+                        let _ = enigo.move_mouse(config.x + x as i32, config.y + y as i32, Coordinate::Abs);
+                        // Click left button
+                        let _ = enigo.button(Button::Left, Direction::Click);
                         thread::sleep(Duration::from_micros(config.speed));
                     }
                 }
