@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { ThemeId, themes } from '../lib/themes';
+import { ThemeId } from '../lib/themes';
 
 interface SettingsState {
     // Theme
