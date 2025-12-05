@@ -1,7 +1,7 @@
 {
     "productName": "SawBot",
     "version": "0.1.0",
-    "identifier": "com.sawbot.app",
+    "identifier": "com.sawbot.desktop",
     "build": {
         "beforeDevCommand": "npm run dev",
         "beforeBuildCommand": "npm run build",

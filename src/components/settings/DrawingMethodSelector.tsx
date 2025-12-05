@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Grid, Activity, PenTool, Zap, MousePointer2, Layers } from 'lucide-react';
 import { cn } from '../ui/Button';
