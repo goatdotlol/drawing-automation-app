@@ -13,14 +13,42 @@
             {
                 "label": "main",
                 "title": "SawBot",
-                "active": true,
-                "targets": "all",
-                "icon": [
-                    "icons/32x32.png",
-                    "icons/128x128.png",
-                    "icons/128x128@2x.png",
-                    "icons/icon.icns",
-                    "icons/icon.ico"
-                ]
+                "width": 1200,
+                "height": 800,
+                "minWidth": 800,
+                "minHeight": 600,
+                "resizable": true,
+                "fullscreen": false,
+                "decorations": false,
+                "transparent": true
+            },
+            {
+                "label": "overlay",
+                "title": "SawBot Overlay",
+                "width": 800,
+                "height": 600,
+                "resizable": false,
+                "fullscreen": true,
+                "decorations": false,
+                "transparent": true,
+                "alwaysOnTop": true,
+                "visible": false,
+                "skipTaskbar": true
             }
+        ],
+        "security": {
+            "csp": null
         }
+    },
+    "bundle": {
+        "active": true,
+        "targets": "all",
+        "icon": [
+            "icons/32x32.png",
+            "icons/128x128.png",
+            "icons/128x128@2x.png",
+            "icons/icon.icns",
+            "icons/icon.ico"
+        ]
+    }
+}
