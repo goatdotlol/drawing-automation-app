@@ -26,15 +26,21 @@ function App() {
     const [isMini, setIsMini] = useState(false);
     const addLog = useLogStore((state) => state.addLog);
     const methodSpeeds = useSettingsStore((state) => state.methodSpeeds);
+    const { lastPosition, lastSize } = useSettingsStore((state) => state.windowPrefs);
+    const setWindowPosition = useSettingsStore((state) => state.setWindowPosition);
+    const setWindowSize = useSettingsStore((state) => state.setWindowSize);
 
     const toggleMini = async () => {
         const appWindow = getCurrentWindow();
         const newState = !isMini;
         setIsMini(newState);
         if (newState) {
-            await appWindow.setSize(new LogicalSize(280, 320)); // Compact size for new mini player
+            await appWindow.setSize(new LogicalSize(280, 320));
         } else {
-            await appWindow.setSize(new LogicalSize(1200, 800));
+            // Restore last size or default
+            const width = lastSize?.width || 1200;
+            const height = lastSize?.height || 800;
+            await appWindow.setSize(new LogicalSize(width, height));
         }
     };
 
@@ -67,15 +73,33 @@ function App() {
         const width = Math.abs(manualSelection.x2 - manualSelection.x1);
         const height = Math.abs(manualSelection.y2 - manualSelection.y1);
 
+        // Validate coordinates (check if off-screen)
+        const screenWidth = window.screen.width;
+        const screenHeight = window.screen.height;
+
+        if (x < 0 || y < 0) {
+            addLog('error', `Invalid coordinates: (${x}, ${y}) - cannot be negative`, 'frontend');
+            return;
+        }
+
+        if (x + width > screenWidth || y + height > screenHeight) {
+            addLog('warn', `Drawing area extends beyond screen bounds (${screenWidth}x${screenHeight})`, 'frontend');
+        }
+
         if (width === 0 || height === 0) {
-            addLog('warn', 'Invalid drawing area (width or height is 0)', 'frontend');
+            addLog('error', 'Invalid drawing area: width or height is 0', 'frontend');
+            return;
+        }
+
+        if (!imagePath) {
+            addLog('error', 'No image selected. Please upload an image first.', 'frontend');
             return;
         }
 
         try {
             setIsDrawing(true);
-            const speed = methodSpeeds[selectedMethod] || 1000;
-            addLog('info', `Starting drawing at ${x},${y} ${width}x${height}...`, 'frontend');
+            const speed = methodSpeeds[selectedMethod] || 1;
+            addLog('info', `Starting ${selectedMethod} at (${x},${y}) ${width}x${height}, speed: ${speed}ms`, 'frontend');
             await invoke('start_drawing', {
                 imagePath,
                 speed,
@@ -87,8 +111,9 @@ function App() {
             });
             addLog('info', 'Drawing started successfully', 'backend');
         } catch (error) {
-            console.error(error);
-            addLog('error', `Failed to start drawing: ${error}`, 'backend');
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            console.error('Drawing error:', error);
+            addLog('error', `Failed to start drawing: ${errorMsg}`, 'backend');
             setIsDrawing(false);
         }
     };
@@ -131,19 +156,36 @@ function App() {
 
     const handleSelectArea = async () => {
         try {
-            const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
-            const overlay = await WebviewWindow.getByLabel('overlay');
-            if (overlay) {
-                // Ensure it's visible and covers the screen
-                await overlay.show();
-                await overlay.setFocus();
-                await overlay.maximize();
-            }
+            await invoke('start_selection');
+            addLog('info', 'Overlay selection tool opened', 'frontend');
         } catch (error) {
             console.error('Failed to open overlay:', error);
             addLog('error', 'Failed to open selection tool', 'frontend');
         }
     };
+
+    // Listen for F8 emergency stop from backend
+    useEffect(() => {
+        const setupEmergencyStopListener = async () => {
+            const { listen } = await import('@tauri-apps/api/event');
+            const unlisten = await listen('emergency-stop', () => {
+                setIsDrawing(false);
+                addLog('error', '🚨 EMERGENCY STOP TRIGGERED (F8)', 'backend');
+                // Visual feedback
+                const body = document.body;
+                body.style.animation = 'flash-red 0.5s';
+                setTimeout(() => { body.style.animation = ''; }, 500);
+            });
+            return unlisten;
+        };
+
+        let unlistenFn: (() => void) | undefined;
+        setupEmergencyStopListener().then(fn => unlistenFn = fn);
+
+        return () => {
+            if (unlistenFn) unlistenFn();
+        };
+    }, [addLog]);
 
     // Listen for area selection
     useEffect(() => {
