@@ -228,7 +228,6 @@ fn process_image(img: &image::DynamicImage, method: &str) -> Vec<Vec<bool>> {
         },
         "stippling" => {
             // VARIABLE DENSITY STIPPLING: More dots in dark areas
-            use std::f32::consts::PI;
             let gray = img.to_luma8();
             
             for y in (0..height).step_by(3) {

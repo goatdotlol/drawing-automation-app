@@ -4,7 +4,7 @@
 mod drawing_engine;
 
 use tauri::{State, Manager, Emitter};
-use tauri_plugin_global_shortcut::{Code, Modifiers, ShortcutState};
+use tauri_plugin_global_shortcut::{Code, Modifiers, ShortcutState, GlobalShortcutExt};
 use drawing_engine::{DrawingEngine, DrawingConfig};
 use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
 use device_query::{DeviceQuery, DeviceState};
