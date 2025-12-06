@@ -14,7 +14,7 @@ pub enum DrawingStatus {
 
 #[derive(Clone, Debug)]
 pub struct DrawingConfig {
-    pub speed: u64, // Delay in microseconds between actions
+    pub speed: u64, // Delay in milliseconds between actions (1-50ms)
     pub method: String,
     pub width: u32,
     pub height: u32,
@@ -131,10 +131,10 @@ impl DrawingEngine {
                         // Click left button
                         let _ = enigo.button(Button::Left, Direction::Click);
                         
-                        // Speed control: Skip sleep entirely if speed is 0 (maximum speed)
-                        if config.speed > 0 {
-                            thread::sleep(Duration::from_micros(config.speed));
-                        }
+                        // CRITICAL: Always have minimum 1ms delay to prevent system freeze
+                        // Speed is in milliseconds: 0ms (fastest with 1ms min) to 50ms (slowest)
+                        let delay_ms = if config.speed == 0 { 1 } else { config.speed };
+                        thread::sleep(Duration::from_millis(delay_ms));
                     }
                 }
             }
