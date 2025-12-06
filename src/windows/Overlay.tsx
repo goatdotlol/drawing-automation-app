@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/core';
 
 export function Overlay() {
@@ -58,7 +57,6 @@ export function Overlay() {
         if (!startPos || !currentPos) return {};
 
         // Convert global screen coords to client coords for display
-        const rect = document.body.getBoundingClientRect();
         const left = Math.min(startPos.x, currentPos.x) - window.screenX;
         const top = Math.min(startPos.y, currentPos.y) - window.screenY;
         const width = Math.abs(currentPos.x - startPos.x);

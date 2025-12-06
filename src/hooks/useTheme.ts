@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { useSettingsStore } from '../stores/settingsStore';
-import { themes } from '../lib/themes';
+import { themes, ThemeId } from '../lib/themes';
 
 export function useTheme() {
     const themeId = useSettingsStore((state) => state.themeId);
 
     useEffect(() => {
-        const theme = themes[themeId];
+        const theme = themes[themeId as ThemeId];
         const root = document.documentElement;
 
         // Apply CSS variables

@@ -1,6 +1,5 @@
-import { Grid, Activity, PenTool, Zap, MousePointer2, Layers, Sparkles, Radar } from 'lucide-react';
+import { Grid, Activity, PenTool, MousePointer2, Layers, Sparkles, Radar } from 'lucide-react';
 import { cn } from '../ui/Button';
-import { SpeedControl } from '../ui/SpeedControl';
 import { useSettingsStore } from '../../stores/settingsStore';
 
 interface DrawingMethod {

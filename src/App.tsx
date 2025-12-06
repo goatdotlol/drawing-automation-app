@@ -26,9 +26,7 @@ function App() {
     const [isMini, setIsMini] = useState(false);
     const addLog = useLogStore((state) => state.addLog);
     const methodSpeeds = useSettingsStore((state) => state.methodSpeeds);
-    const { lastPosition, lastSize } = useSettingsStore((state) => state.windowPrefs);
-    const setWindowPosition = useSettingsStore((state) => state.setWindowPosition);
-    const setWindowSize = useSettingsStore((state) => state.setWindowSize);
+    const { lastSize } = useSettingsStore((state) => state.windowPrefs);
 
     const toggleMini = async () => {
         const appWindow = getCurrentWindow();
